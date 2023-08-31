@@ -1,0 +1,25 @@
+volumes:
+  postgres:
+  nextcloud:
+
+services:
+  postgres:
+    image: postgres:13
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextclouduser
+      POSTGRES_PASSWORD: DEdfGGRwwefrCVb
+
+  nextcloud:
+    image: nextcloud:25.0.10
+    ports:
+      - 8080:80
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: nextclouduser
+      POSTGRES_PASSWORD: DEdfGGRwwefrCVb
