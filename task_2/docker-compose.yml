@@ -23,3 +23,11 @@ services:
       POSTGRES_DB: nextcloud
       POSTGRES_USER: nextclouduser
       POSTGRES_PASSWORD: DEdfGGRwwefrCVb
+      REDIS_HOST: redis
+      REDIS_HOST_PASSWORD: D111111d
+      
+  redis:
+    image: redis:7.2.0
+    command: redis-server --requirepass D111111d 
+    ports: 
+      - 6379:6379
