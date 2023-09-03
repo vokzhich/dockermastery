@@ -2,6 +2,9 @@ volumes:
   postgres:
   nextcloud:
 
+networks:
+  nextcloud_network:
+
 services:
   postgres:
     image: postgres:13
@@ -11,6 +14,28 @@ services:
       POSTGRES_DB: nextcloud
       POSTGRES_USER: nextclouduser
       POSTGRES_PASSWORD: DEdfGGRwwefrCVb
+    networks:
+      - nextcloud_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 4
+      start_period: 60s
+
+  redis:
+    image: redis:7.2.0
+    command: ["redis-server", "--requirepass", "D111111d"] 
+    ports: 
+      - 6379:6379
+    networks:
+      - nextcloud_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   nextcloud:
     image: nextcloud:25.0.10
@@ -25,9 +50,18 @@ services:
       POSTGRES_PASSWORD: DEdfGGRwwefrCVb
       REDIS_HOST: redis
       REDIS_HOST_PASSWORD: D111111d
-      
-  redis:
-    image: redis:7.2.0
-    command: redis-server --requirepass D111111d 
-    ports: 
-      - 6379:6379
+    networks:
+      - nextcloud_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    
