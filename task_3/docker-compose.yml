@@ -1,0 +1,48 @@
+volumes:
+  wordpress:
+  mariadb:
+
+networks:
+  wordpress_network:
+
+services:
+  wordpress: 
+    image: wordpress:6.3.1-apache
+    environment:
+      WORDPRESS_DB_HOST: mariadb
+      WORDPRESS_DB_USER: mariadbuser1
+      WORDPRESS_DB_PASSWORD: jrk5akXml4MSe3
+      WORDPRESS_DB_NAME: wordpressdb
+    volumes:
+      - wordpress:/var/www/html
+    ports:
+      - 8080:80
+    networks:
+      - wordpress_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 4
+      start_period: 20s
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+  mariadb:
+    image: mariadb:11.1
+    networks:
+      - wordpress_network
+    volumes:
+      - mariadb:/var/lib/mysql
+    environment:
+        MARIADB_DATABASE: wordpressdb
+        MARIADB_ROOT_PASSWORD: z2Z4JJpVWARS
+        MARIADB_USER: mariadbuser1
+        MARIADB_PASSWORD: jrk5akXml4MSe3
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
