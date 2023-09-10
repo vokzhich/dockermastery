@@ -7,20 +7,30 @@ networks:
 
 services:
   wordpress: 
-    image: wordpress:6.3.1-apache
+    image: bitnami/wordpress:6.3.1-debian-11-r7
     environment:
-      WORDPRESS_DB_HOST: mariadb
-      WORDPRESS_DB_USER: mariadbuser1
-      WORDPRESS_DB_PASSWORD: jrk5akXml4MSe3
-      WORDPRESS_DB_NAME: wordpressdb
+      WORDPRESS_DATABASE_HOST: mariadb
+      WORDPRESS_DATABASE_USER: mariadbuser1
+      WORDPRESS_DATABASE_PASSWORD: jrk5akXml4MSe3
+      WORDPRESS_DATABASE_NAME: wordpressdb
+      WORDPRESS_USERNAME: user
+      WORDPRESS_PASSWORD: bitnami
+      WORDPRESS_EMAIL: test@gmail.com
+      WORDPRESS_FIRST_NAME: FirstName
+      WORDPRESS_LAST_NAME: LastName
+      WORDPRESS_BLOG_NAME: User's blog
+      WORDPRESS_SMTP_HOST: smtp.gmail.com
+      WORDPRESS_SMTP_PORT: 587
+      WORDPRESS_SMTP_USER: test@gmail.com
+      WORDPRESS_SMTP_PASSWORD: D111!!!d
     volumes:
-      - wordpress:/var/www/html
+      - wordpress:/bitnami/wordpress
     ports:
-      - 8080:80
+      - 8080:8080
     networks:
       - wordpress_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1
       interval: 10s
       timeout: 5s
       retries: 4
@@ -41,7 +51,7 @@ services:
         MARIADB_USER: mariadbuser1
         MARIADB_PASSWORD: jrk5akXml4MSe3
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"] # For MariaDB there is a special check defined on ther website. It is a script written inside of their official images named healthcheck.sh
       interval: 10s
       timeout: 5s
       retries: 3
