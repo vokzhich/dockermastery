@@ -1,0 +1,67 @@
+networks:
+  mattermost_network:
+
+volumes:
+  postgres:
+  mattermost_data:
+  mattermost_config:
+  mattermost_logs:
+  mattermost_plugins:
+  mattermost-client-plugins:
+  mattermost-indexes:
+
+secrets:
+  psql-pw:
+    external: true
+
+services:
+  postgres:
+    image: postgres:14
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: mattermost
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD_FILE: /run/secrets/psql-pw
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 4
+      start_period: 60s
+    networks:
+      - mattermost_network
+    secrets:
+      - psql-pw
+    
+  mattermost:
+    image: mattermost/mattermost-team-edition:9.0
+    volumes:
+      - mattermost_data:/volumes/app/mattermost/data
+      - mattermost_config:/volumes/app/mattermost/config
+      - mattermost_logs:/volumes/app/mattermost/logs
+      - mattermost_plugins:/volumes/app/mattermost/plugins
+      - mattermost-client-plugins:/volumes/app/mattermost/client/plugins
+      - mattermost-indexes:/volumes/app/mattermost/bleve-indexes
+    environment:
+      TZ: US
+      POSTGRES_DB: mattermost
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: testpassword
+      MM_SQLSETTINGS_DRIVERNAME: postgres
+      MM_SQLSETTINGS_DATASOURCE: postgres://user:testpassword@postgres:5432/mattermost?sslmode=disable&connect_timeout=10
+      MM_BLEVESETTINGS_INDEXDIR: /mattermost/bleve-indexes
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8065/"]
+      interval: 10s
+      timeout: 5s
+      retries: 4
+      start_period: 90s
+    depends_on:
+    - postgres
+    tmpfs:
+      - /tmp
+    ports:
+      - 8080:8065
+    networks:
+      - mattermost_network
