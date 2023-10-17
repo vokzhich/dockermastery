@@ -17,6 +17,14 @@ secrets:
 services:
   postgres:
     image: postgres:14
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 4gb
+        reservations:
+          cpus: '0.25'
+          memory: 4gb
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
@@ -36,6 +44,14 @@ services:
     
   mattermost:
     image: mattermost/mattermost-team-edition:9.0
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 4gb
+        reservations:
+          cpus: '0.25'
+          memory: 4gb
     volumes:
       - mattermost_data:/volumes/app/mattermost/data
       - mattermost_config:/volumes/app/mattermost/config
