@@ -21,7 +21,7 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 4gb
+          memory: 5gb
         reservations:
           cpus: '0.25'
           memory: 4gb
@@ -48,7 +48,7 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 4gb
+          memory: 5gb
         reservations:
           cpus: '0.25'
           memory: 4gb
