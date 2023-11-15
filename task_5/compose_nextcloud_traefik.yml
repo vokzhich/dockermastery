@@ -1,6 +1,7 @@
 volumes:
   postgres:
   nextcloud:
+  traefik-certificates:
 
 networks:
   nextcloud_network:
@@ -63,7 +64,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock # Allows access to the Docker daemon
       - traefik-certificates:/etc/traefik/acme #  Storage location for certificates
     networks:
-      - traefik-network
+      - nextcloud_network
     ports:
       - "80:80"
       - "443:443"
@@ -119,7 +120,7 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_HOSTNAME}`)"
+      - "traefik.http.routers.nextcloud.rule=Host(`vokzhich.com`)"
       - "traefik.http.routers.nextcloud.service=nextcloud"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
