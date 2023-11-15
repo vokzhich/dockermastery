@@ -37,6 +37,60 @@ services:
       retries: 3
       start_period: 60s
 
+  traefik:
+    image: traefik:2.9
+    command: # Commands and settings for Traefik
+      - "--log.level=WARN" # Sets the logging level
+      - "--accesslog=true" # Enables access logging
+      - "--api.dashboard=true" # Enables the API dashboard
+      - "--api.insecure=true" # Makes the API accessible without a secure connection.
+      - "--ping=true" # Enables a health check functionality
+      - "--ping.entrypoint=ping" # Sets the entry point for the health check
+      - "--entryPoints.ping.address=:8082" # Specifies the address for the ping entry point
+      - "--entryPoints.web.address=:80" #  Sets the address for web traffic
+      - "--entryPoints.websecure.address=:443" # Address for secure web traffic
+      - "--providers.docker=true" # Enables Docker integration.
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock" # Specifies the path to Docker
+      - "--providers.docker.exposedByDefault=false" # Doesn't expose all containers by default
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true" # Enables Let's Encrypt support
+      - "--certificatesresolvers.letsencrypt.acme.email= vokzhich@gmail.com" #  Email for Let's Encrypt
+      - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json" # Path for storing Let's Encrypt data.
+      - "--metrics.prometheus=true" # Enables Prometheus metrics.
+      - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0" # Settings for Prometheus metrics
+      - "--global.checkNewVersion=true" # Checks for new versions of Traefik
+      - "--global.sendAnonymousUsage=false" # Opt-out of sending anonymous usage stats
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Allows access to the Docker daemon
+      - traefik-certificates:/etc/traefik/acme #  Storage location for certificates
+    networks:
+      - traefik-network
+    ports:
+      - "80:80"
+      - "443:443"
+    healthcheck:
+      test: ["CMD", "wget", "http://localhost:8082/ping","--spider"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      - "traefik.enable=true" #  Activates Traefik for this service
+      - "traefik.http.routers.dashboard.rule=Host(`vokzhich.com`)" # Defines a routing rule for the dashboard using the hostname.
+      - "traefik.http.routers.dashboard.service=api@internal" # Specifies that the dashboard uses the internal API service.
+      - "traefik.http.routers.dashboard.entrypoints=websecure" # Sets the entry point for secure access to the dashboard.
+      - "traefik.http.services.dashboard.loadbalancer.server.port=8080" # Defines the port for the load balancer of the dashboard.
+      - "traefik.http.routers.dashboard.tls=true" # Enables TLS (Transport Layer Security) for the dashboard router.
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt" # Uses Let's Encrypt for TLS certificate resolution.
+      - "traefik.http.services.dashboard.loadbalancer.passhostheader=true" #  Passes the host header through the load balancer
+      - "traefik.http.routers.dashboard.middlewares=authtraefik" #  Applies middleware for authentication.
+      - "traefik.http.middlewares.authtraefik.basicauth.users=traefikadmin:$$2y$$10$$sMzJfirKC75x/hVpiINeZOiSm.Jkity9cn4KwNkRvO7hSQVFc5FLO" # Sets users for basic authentication
+      - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)" # A rule to catch all HTTP requests
+      - "traefik.http.routers.http-catchall.entrypoints=web" # Specifies that the catch-all uses the web entry point.
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https" # traefik.http.routers.http-catchall.middlewares=redirect-to-https
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https" # onfigures the scheme for redirecting to HTTPS.
+    restart: unless-stopped 
+
+
   nextcloud:
     image: nextcloud:25.0.10
     ports:
@@ -63,5 +117,17 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`${NEXTCLOUD_HOSTNAME}`)"
+      - "traefik.http.routers.nextcloud.service=nextcloud"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+      - "traefik.http.routers.nextcloud.tls=true"
+      - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
+      - "traefik.http.services.nextcloud.loadbalancer.passhostheader=true"
+      - "traefik.http.routers.nextcloud.middlewares=compresstraefik"
+      - "traefik.http.middlewares.compresstraefik.compress=true"
+      - "traefik.docker.network=traefik-network"
 
     
