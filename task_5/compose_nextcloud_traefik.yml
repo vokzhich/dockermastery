@@ -89,8 +89,7 @@ services:
       - "traefik.http.routers.http-catchall.entrypoints=web" # Specifies that the catch-all uses the web entry point.
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https" # traefik.http.routers.http-catchall.middlewares=redirect-to-https
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https" # onfigures the scheme for redirecting to HTTPS.
-    restart: unless-stopped 
-
+    restart: unless-stopped
 
   nextcloud:
     image: nextcloud:25.0.10
@@ -127,4 +126,4 @@ services:
       - "traefik.http.services.nextcloud.loadbalancer.passhostheader=true" # Standard line should always present
       - "traefik.http.routers.nextcloud.middlewares=compresstraefik" # Compresing traffic
       - "traefik.http.middlewares.compresstraefik.compress=true" # Compresing traffic
-      - "traefik.docker.network=nextcloud_network" # IMPORTANT! Has to be mapped to the traefik network 
+      - "traefik.docker.network=nextcloud_network" # IMPORTANT! Has to be mapped to the traefik network
